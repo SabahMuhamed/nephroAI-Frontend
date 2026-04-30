@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ReportUpload from "@/components/ReportUpload";
-import { TooltipField } from "@/components/Tooltipfeild";
+import { TooltipField } from "@/components/TooltipFeild";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 
