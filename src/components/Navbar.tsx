@@ -18,31 +18,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [username, setUsername] = useState<string>("");
 
-  // 🔥 FETCH USERNAME FROM SUPABASE
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Profile fetch error:", error);
-        return;
-      }
-
-      if (data?.full_name) {
-        setUsername(data.full_name);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
 
   // 🔐 LOGOUT
   const logout = async () => {
