@@ -5,7 +5,7 @@ const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: any) => {
     const [user, setUser] = useState<any>(null);
-    const [role, setRole] = useState("user");
+    const [role, setRole] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

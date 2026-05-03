@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
+import AdminRoute from "@/components/AdminRoute";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 import Index from "./pages/Index.tsx";
 import Prediction from "./pages/Prediction.tsx";
@@ -18,8 +20,6 @@ import Dashboard from "./pages/Dashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AuthPage from "./pages/Auth";
 
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +65,17 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminRoute>
+                        <AdminDashboard />
+                      </AdminRoute>
                     </ProtectedRoute>
                   }
                 />
