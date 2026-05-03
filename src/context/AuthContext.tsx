@@ -5,31 +5,70 @@ const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: any) => {
     const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true); // 🔥 ADD THIS
+    const [role, setRole] = useState("user");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const getUser = async () => {
-            const { data } = await supabase.auth.getUser();
-            setUser(data.user);
-            setLoading(false); // 🔥 IMPORTANT
+        let mounted = true;
+
+        const init = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!mounted) return;
+
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+
+            // 🔥 STOP LOADING IMMEDIATELY (important)
+            setLoading(false);
+
+            // 🔥 LOAD ROLE IN BACKGROUND (non-blocking)
+            if (currentUser) {
+                supabase
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", currentUser.id)
+                    .maybeSingle()
+                    .then(({ data }) => {
+                        if (data?.role) {
+                            setRole(data.role.toLowerCase());
+                        }
+                    });
+            }
         };
 
-        getUser();
+        init();
 
         const { data: listener } = supabase.auth.onAuthStateChange(
             (_event, session) => {
-                setUser(session?.user ?? null);
-                setLoading(false); // 🔥 ALSO IMPORTANT
+                const currentUser = session?.user ?? null;
+                setUser(currentUser);
+
+                if (currentUser) {
+                    supabase
+                        .from("profiles")
+                        .select("role")
+                        .eq("id", currentUser.id)
+                        .maybeSingle()
+                        .then(({ data }) => {
+                            if (data?.role) {
+                                setRole(data.role.toLowerCase());
+                            }
+                        });
+                } else {
+                    setRole("user");
+                }
             }
         );
 
         return () => {
+            mounted = false;
             listener.subscription.unsubscribe();
         };
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, loading }}>
+        <AuthContext.Provider value={{ user, role, loading }}>
             {children}
         </AuthContext.Provider>
     );

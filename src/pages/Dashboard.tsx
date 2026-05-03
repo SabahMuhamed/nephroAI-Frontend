@@ -27,6 +27,11 @@ const Dashboard = () => {
   });
   const [trend, setTrend] = useState<any[]>([]);
 
+
+  if (!user) {
+    return null;
+  }
+
   // 🚀 REAL-TIME FETCH
   useEffect(() => {
     if (!user) return;

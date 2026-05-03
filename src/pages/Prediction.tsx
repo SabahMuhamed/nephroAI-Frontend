@@ -30,6 +30,11 @@ const Prediction = () => {
   const { user } = useAuth();
   const API = import.meta.env.VITE_API_URL;
 
+  if (!user) {
+    setError("User not logged in");
+    return;
+  }
+
   // INPUT HANDLING
   const handleChange = (e: any) => {
     const { name, value } = e.target;

@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -16,11 +15,9 @@ const links = [
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
+  const { user, role } = useAuth();
 
-
-  // 🔐 LOGOUT
   const logout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -52,8 +49,8 @@ const Navbar = () => {
               key={link.to}
               to={link.to}
               className={`transition-colors ${location.pathname === link.to
-                ? "text-primary"
-                : "text-muted-foreground hover:text-primary"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-primary"
                 }`}
             >
               {link.label}
@@ -63,17 +60,15 @@ const Navbar = () => {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-3">
-
           <ThemeToggle />
 
           {user ? (
             <>
-              {/* 👤 USERNAME FROM DB */}
+              {/* 👤 ROLE DISPLAY */}
               <span className="text-sm font-medium text-primary">
-                👤
+                👤 {role === "admin" ? "Admin" : "User"}
               </span>
 
-              {/* LOGOUT */}
               <button
                 onClick={logout}
                 className="px-4 py-2 rounded-lg border text-sm hover:bg-primary/10"
@@ -89,7 +84,6 @@ const Navbar = () => {
               Login
             </Link>
           )}
-
         </div>
       </div>
     </motion.nav>
