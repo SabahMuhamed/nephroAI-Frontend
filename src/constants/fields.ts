@@ -1,5 +1,6 @@
 export const FIELD_LABELS: Record<string, string> = {
   patient_name: "Patient Name",
+  gender: "Gender (male/female)",
   age: "Age (years)",
   bp: "Blood Pressure (mm/Hg)",
   sg: "Specific Gravity",

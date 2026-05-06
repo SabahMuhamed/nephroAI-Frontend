@@ -1,4 +1,5 @@
 export const FIELD_FULL_NAMES: Record<string, string> = {
+    gender: "Gender",
     age: "Age",
     bp: "Blood Pressure",
     sg: "Specific Gravity",

@@ -143,8 +143,23 @@ const Result = () => {
               <p className="mt-3 text-sm text-muted-foreground">
                 Confidence: {result.confidence}%
               </p>
-            </div>
 
+              {/* ✅ Added Risk Level */}
+              <p className="mt-2 text-sm font-semibold">
+                Risk Level:{" "}
+                <span
+                  className={
+                    result.risk_level === "High"
+                      ? "text-red-500"
+                      : result.risk_level === "Moderate"
+                        ? "text-yellow-500"
+                        : "text-green-500"
+                  }
+                >
+                  {result.risk_level}
+                </span>
+              </p>
+            </div>
             {/* TABLE */}
             <div className="glass-card p-6 mb-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">

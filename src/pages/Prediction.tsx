@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const categoricalFields = [
   "rbc", "pc", "pcc", "ba",
-  "htn", "dm", "cad", "appet", "pe", "ane"
+  "htn", "dm", "cad", "appet", "pe", "ane", "gender"
 ];
 
 const textFields = ["patient_name"];
@@ -129,6 +129,9 @@ const Prediction = () => {
     setIsSubmitting(true);
     setError(null);
 
+
+
+
     const payload: Record<string, any> = {};
 
     for (const key in formData) {
@@ -159,11 +162,17 @@ const Prediction = () => {
       }
     }
 
+    const payloadForModel = { ...payload };
+    delete payloadForModel.gender;
+
+    console.log("FULL PAYLOAD:", payload);
+    console.log("MODEL PAYLOAD:", payloadForModel);
+
     try {
       const res = await fetch(`${API}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadForModel),
       });
 
       const data = await res.json();
@@ -245,6 +254,13 @@ const Prediction = () => {
                           required
                         >
                           <option value="">Select</option>
+
+                          {field === "gender" && (
+                            <>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                            </>
+                          )}
 
                           {["rbc", "pc"].includes(field) && (
                             <>
