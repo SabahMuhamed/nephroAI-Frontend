@@ -36,7 +36,7 @@ const Navbar = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-6 h-16 relative flex items-center justify-between">
 
         {/* =========================
             LOGO
@@ -54,7 +54,7 @@ const Navbar = () => {
         {/* =========================
             NAV LINKS
         ========================= */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium relative">
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium absolute left-1/2 -translate-x-1/2">
 
           {/* PUBLIC LINKS */}
           {publicLinks.map((link) => {
