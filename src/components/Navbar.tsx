@@ -1,25 +1,32 @@
 import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "@/components/ThemeToggle";
+
 import { useAuth } from "@/context/AuthContext";
+import { useApp } from "@/context/AppContext";
+
 import { supabase } from "@/lib/supabase";
 
-const links = [
+const publicLinks = [
   { to: "/", label: "Home" },
   { to: "/predict", label: "Predict" },
   { to: "/disease-info", label: "Disease Info" },
-  { to: "/dashboard", label: "Dashboard" },
   { to: "/about", label: "About" },
 ];
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role } = useAuth();
 
+  const { user, role } = useAuth();
+  const { result } = useApp();
+
+  // =========================
+  // LOGOUT
+  // =========================
   const logout = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   return (
@@ -31,30 +38,39 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
 
-        {/* LOGO */}
+        {/* =========================
+            LOGO
+        ========================= */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:scale-105 transition">
             <span className="text-primary font-bold">N</span>
           </div>
+
           <span className="font-heading font-bold text-lg tracking-wide">
             NephroAI
           </span>
         </Link>
 
-        {/* NAV LINKS */}
+        {/* =========================
+            NAV LINKS
+        ========================= */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium relative">
-          {links.map((link) => {
+
+          {/* PUBLIC LINKS */}
+          {publicLinks.map((link) => {
             const active = location.pathname === link.to;
 
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className="relative px-2 py-1 text-muted-foreground hover:text-primary transition"
+                className={`relative px-2 py-1 transition ${active
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-primary"
+                  }`}
               >
                 {link.label}
 
-                {/* 🎯 Animated active indicator */}
                 {active && (
                   <motion.div
                     layoutId="active-tab"
@@ -69,36 +85,71 @@ const Navbar = () => {
               </Link>
             );
           })}
+
+          {/* =========================
+              RESULT PAGE LINK
+          ========================= */}
+          {result && (
+            <Link
+              to="/result"
+              className={`relative px-2 py-1 transition ${location.pathname === "/result"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+                }`}
+            >
+              Results
+
+              {location.pathname === "/result" && (
+                <motion.div
+                  layoutId="active-tab"
+                  className="absolute left-0 right-0 -bottom-1 h-[2px] bg-primary rounded-full"
+                />
+              )}
+            </Link>
+          )}
+
+          {/* =========================
+              ADMIN ONLY LINK
+          ========================= */}
+          {role === "admin" && (
+            <Link
+              to="/nephroaddmmiinn"
+              className={`relative px-2 py-1 transition ${location.pathname === "/nephroaddmmiinn"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+                }`}
+            >
+              Admin Dashboard
+
+              {location.pathname === "/nephroaddmmiinn" && (
+                <motion.div
+                  layoutId="active-tab"
+                  className="absolute left-0 right-0 -bottom-1 h-[2px] bg-primary rounded-full"
+                />
+              )}
+            </Link>
+          )}
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* =========================
+            RIGHT SIDE
+        ========================= */}
         <div className="flex items-center gap-3">
 
+          {/* THEME TOGGLE */}
           <ThemeToggle />
 
-          {user ? (
+          {/* =========================
+              ADMIN UI
+          ========================= */}
+          {role === "admin" && user && (
             <>
-              {/* 🧠 ROLE BADGE */}
-              <span
-                className={`px-3 py-1 text-xs rounded-full font-medium ${role === "admin"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
-                  }`}
-              >
-                {role === "admin" ? "Admin" : "User"}
+              {/* ADMIN BADGE */}
+              <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                Admin
               </span>
 
-              {/* 🔥 ONLY ADMIN PANEL BUTTON */}
-              {role === "admin" && (
-                <Link
-                  to="/admin"
-                  className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:scale-105 transition"
-                >
-                  Admin Panel
-                </Link>
-              )}
-
-              {/* LOGOUT */}
+              {/* LOGOUT BUTTON */}
               <button
                 onClick={logout}
                 className="px-4 py-2 rounded-lg border text-sm hover:bg-primary/10 transition"
@@ -106,14 +157,8 @@ const Navbar = () => {
                 Logout
               </button>
             </>
-          ) : (
-            <Link
-              to="/auth"
-              className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
-            >
-              Login
-            </Link>
           )}
+
         </div>
       </div>
     </motion.nav>

@@ -45,18 +45,18 @@ const App = () => (
                 <Route
                   path="/predict"
                   element={
-                    <ProtectedRoute>
-                      <Prediction />
-                    </ProtectedRoute>
+
+                    <Prediction />
+
                   }
                 />
 
                 <Route
                   path="/result"
                   element={
-                    <ProtectedRoute>
-                      <Result />
-                    </ProtectedRoute>
+
+                    <Result />
+
                   }
                 />
 
@@ -66,11 +66,13 @@ const App = () => (
                     <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
+
+
                   }
                 />
 
                 <Route
-                  path="/admin"
+                  path="/nephroaddmmiinn"
                   element={
                     <ProtectedRoute>
                       <AdminRoute>

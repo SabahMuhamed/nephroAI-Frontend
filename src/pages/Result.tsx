@@ -160,6 +160,81 @@ const Result = () => {
                 </span>
               </p>
             </div>
+            {/* WARNINGS */}
+            {result.warnings?.length > 0 && (
+              <div className="mb-8">
+
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+
+                  <h3 className="font-semibold text-lg text-red-500">
+                    Warnings
+                  </h3>
+                </div>
+
+                <ul className="space-y-2 pl-1">
+
+                  {result.warnings.map((w: string, i: number) => (
+                    <li
+                      key={i}
+                      className="text-sm md:text-base text-red-500 leading-relaxed"
+                    >
+                      • {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* POSSIBLE CAUSES */}
+            {result.possible_causes?.length > 0 && (
+              <div className="mb-8">
+
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+
+                  <h3 className="font-semibold text-lg">
+                    Possible Causes & Risk Factors
+                  </h3>
+                </div>
+
+                <ul className="space-y-3 pl-1">
+
+                  {result.possible_causes.map((cause: any, i: number) => {
+
+                    const severity =
+                      cause.severity === "critical"
+                        ? "text-red-500"
+                        : cause.severity === "borderline"
+                          ? "text-yellow-500"
+                          : "text-green-500";
+
+                    const label =
+                      cause.severity === "critical"
+                        ? "Critical"
+                        : cause.severity === "borderline"
+                          ? "Borderline"
+                          : "Normal";
+
+                    return (
+                      <li
+                        key={i}
+                        className={`text-sm md:text-base leading-relaxed ${severity}`}
+                      >
+                        • {cause.message}
+
+                        <span className="ml-2 font-semibold">
+                          ({label})
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+
+
             {/* TABLE */}
             <div className="glass-card p-6 mb-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -201,23 +276,6 @@ const Result = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* WARNINGS */}
-            {result.warnings?.length > 0 && (
-              <div className="glass-card p-6 mb-6 border border-red-300">
-                <div className="flex items-center gap-2 text-red-500 mb-3">
-                  <AlertTriangle className="w-5 h-5" />
-                  <h3 className="font-semibold">Warnings</h3>
-                </div>
-
-                <ul className="text-sm text-red-500">
-                  {result.warnings.map((w: string, i: number) => (
-                    <li key={i}>• {w}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* RECOMMENDATIONS */}
             {result.recommendations?.length > 0 && (
               <div className="glass-card p-6 mb-6">
@@ -234,14 +292,15 @@ const Result = () => {
               </div>
             )}
 
+
             {/* ACTION BUTTONS */}
             <div className="flex justify-center gap-4 mt-8">
               <Button onClick={() => downloadReportPDF(result)}>
                 Download PDF
               </Button>
 
-              <Button onClick={() => navigate("/dashboard")}>
-                Dashboard
+              <Button variant="outline" onClick={() => navigate("/predict")}>
+                New Prediction
               </Button>
             </div>
 

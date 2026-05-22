@@ -30,10 +30,6 @@ const Prediction = () => {
   const { user } = useAuth();
   const API = import.meta.env.VITE_API_URL;
 
-  if (!user) {
-    setError("User not logged in");
-    return;
-  }
 
   // INPUT HANDLING
   const handleChange = (e: any) => {
@@ -185,7 +181,8 @@ const Prediction = () => {
       if (user) {
         await supabase.from("patients").insert([
           {
-            user_id: user.id,
+            user_id: null,
+            session_type: "anonymous",
             ...payload,
             prediction: data.prediction,
             confidence: data.confidence,

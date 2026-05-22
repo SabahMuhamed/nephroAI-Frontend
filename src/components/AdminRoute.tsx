@@ -1,27 +1,23 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-export default function AdminRoute({ children }) {
+export default function AdminRoute({ children }: any) {
   const { user, role, loading } = useAuth();
 
-  console.log("ADMIN CHECK:", { user, role, loading });
-
-  // Wait for auth
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
-  // Wait for role
-  if (role === null) {
-    return <div>Loading role...</div>;
-  }
-
-  // Not logged in
+  // ❌ not logged in
   if (!user) {
     return <Navigate to="/auth" />;
   }
 
-  // Not admin
+  // ❌ not admin
   if (role !== "admin") {
     return <Navigate to="/" />;
   }

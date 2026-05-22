@@ -1,194 +1,278 @@
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
+import { PieChart, Pie, Tooltip, Cell } from "recharts";
 
-const Dashboard = () => {
-  const { user } = useAuth();
+const COLORS = ["#ef4444", "#22c55e"];
 
+export default function AdminDashboard() {
+  const [users, setUsers] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
   const [stats, setStats] = useState({
-    total: 0,
     ckd: 0,
-    avgConfidence: 0,
+    non_ckd: 0,
   });
-  const [trend, setTrend] = useState<any[]>([]);
 
+  // 🔥 LOAD USERS (ADMIN FIRST)
+  const loadUsers = async () => {
+    const { data } = await supabase.from("profiles").select("*");
 
-  if (!user) {
-    return null;
-  }
+    const sorted =
+      data?.sort((a: any, b: any) =>
+        a.role === "admin" ? -1 : b.role === "admin" ? 1 : 0
+      ) || [];
 
-  // 🚀 REAL-TIME FETCH
+    setUsers(sorted);
+  };
+
+  // 🔥 LOAD PATIENTS
+  const loadPatients = async (userId?: string) => {
+    let query = supabase.from("patients").select("*");
+
+    if (userId && userId !== "ALL") {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data } = await query;
+    setPatients(data || []);
+  };
+
+  // 🔥 APPLY FILTER + STATS
   useEffect(() => {
-    if (!user) return;
+    let filtered = [...patients];
 
-    const fetchData = async () => {
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
+    if (filter === "ckd") {
+      filtered = filtered.filter((p) => p.prediction === "ckd");
+    } else if (filter === "non_ckd") {
+      filtered = filtered.filter((p) => p.prediction !== "ckd");
+    }
 
-      if (!data) return;
+    setFilteredPatients(filtered);
 
-      setPatients(data);
+    let ckd = 0;
+    let non_ckd = 0;
 
-      // 🔥 STATS
-      let total = data.length;
-      let ckd = data.filter((p) => p.prediction?.toLowerCase() === "ckd").length;
-      let avg =
-        data.reduce((sum, p) => sum + p.confidence, 0) / (total || 1);
+    filtered.forEach((p) => {
+      if (p.prediction === "ckd") ckd++;
+      else non_ckd++;
+    });
 
-      setStats({
-        total,
-        ckd,
-        avgConfidence: avg,
-      });
+    setStats({ ckd, non_ckd });
+  }, [patients, filter]);
 
-      // 🔥 TREND
-      const map: any = {};
-      data.forEach((p) => {
-        const d = new Date(p.created_at).toLocaleDateString();
+  useEffect(() => {
+    loadUsers();
+    loadPatients();
+  }, []);
 
-        if (!map[d]) map[d] = { date: d, value: 0 };
+  // 🔒 DELETE USER
+  const deleteUser = async (user: any) => {
+    if (user.role === "admin") {
+      alert("Admin cannot be deleted");
+      return;
+    }
 
-        map[d].value++;
-      });
+    await supabase.from("profiles").delete().eq("id", user.id);
+    loadUsers();
+  };
 
-      setTrend(Object.values(map));
-    };
+  // 📥 EXPORT CSV
+  const exportCSV = () => {
+    if (!patients.length) return;
 
-    fetchData();
+    const headers = Object.keys(patients[0]);
+    const rows = patients.map((p) =>
+      headers.map((h) => p[h]).join(",")
+    );
 
-    // 🔥 AUTO REFRESH (REAL-TIME FEEL)
-    const interval = setInterval(fetchData, 5000);
+    const csv = [headers.join(","), ...rows].join("\n");
 
-    return () => clearInterval(interval);
-  }, [user]);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dataset.csv";
+    a.click();
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen text-foreground">
       <Navbar />
 
-      <div className="pt-24 pb-20">
-        <div className="container mx-auto px-6 max-w-7xl">
+      <div className="p-6 mt-20 grid grid-cols-12 gap-6">
 
-          {/* TITLE */}
-          <motion.div className="mb-10">
-            <h1 className="text-4xl font-bold">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Real-time analytics of your predictions
-            </p>
-          </motion.div>
+        {/* 👥 USERS */}
+        <div className="col-span-3 bg-background/60 backdrop-blur-xl border border-border rounded-2xl p-4">
+          <h2 className="mb-3 font-semibold text-lg">Users</h2>
 
-          {/* ================= STATS ================= */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {/* 🔍 SEARCH */}
+          <input
+            type="text"
+            placeholder="Search user..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-muted text-sm outline-none"
+          />
 
-            <div className="glass-card p-6">
-              <p className="text-sm text-muted-foreground">Total Predictions</p>
-              <h2 className="text-3xl font-bold">{stats.total}</h2>
+          <div className="space-y-2 max-h-[500px] overflow-y-auto">
+            {users
+              .filter((u) =>
+                u.email.toLowerCase().includes(search.toLowerCase())
+              )
+              .map((u) => (
+                <div
+                  key={u.id}
+                  onClick={() => {
+                    setSelectedUser(u);
+                    loadPatients(u.id);
+                  }}
+                  className={`p-3 rounded-xl cursor-pointer flex justify-between items-center ${selectedUser?.id === u.id
+                    ? "bg-primary/10 border border-primary/30"
+                    : "hover:bg-muted/30"
+                    }`}
+                >
+                  <div>
+                    <p className="text-sm">{u.email}</p>
+
+                    {u.role === "admin" && (
+                      <span className="text-xs text-green-400">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+
+                  {u.role !== "admin" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteUser(u);
+                      }}
+                      className="text-red-400 text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* 📊 MAIN */}
+        <div className="col-span-9 space-y-6">
+
+          {/* HEADER */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">
+              Dashboard {selectedUser ? `(${selectedUser.email})` : "(All Users)"}
+            </h2>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setSelectedUser(null);
+                  loadPatients("ALL");
+                }}
+                className="px-4 py-2 bg-muted rounded-lg text-sm"
+              >
+                Show All
+              </button>
+
+              <button
+                onClick={exportCSV}
+                className="px-4 py-2 bg-primary text-white rounded-lg text-sm"
+              >
+                Export CSV
+              </button>
             </div>
-
-            <div className="glass-card p-6">
-              <p className="text-sm text-muted-foreground">CKD Detected</p>
-              <h2 className="text-3xl font-bold text-red-500">
-                {stats.ckd}
-              </h2>
-            </div>
-
-            <div className="glass-card p-6">
-              <p className="text-sm text-muted-foreground">Avg Confidence</p>
-              <h2 className="text-3xl font-bold text-green-500">
-                {(stats.avgConfidence * 100).toFixed(1)}%
-              </h2>
-            </div>
-
           </div>
 
-          {/* ================= CHART ================= */}
-          <div className="glass-card p-6 mb-12">
-            <h3 className="mb-4 font-semibold">Prediction Activity</h3>
-
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#6366f1"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* FILTER */}
+          <div className="flex gap-3">
+            {["all", "ckd", "non_ckd"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1 rounded-lg text-sm ${filter === f
+                  ? "bg-primary text-white"
+                  : "bg-muted"
+                  }`}
+              >
+                {f.toUpperCase()}
+              </button>
+            ))}
           </div>
 
-          {/* ================= HISTORY ================= */}
-          <div className="glass-card p-6">
-            <h3 className="mb-4 font-semibold">Recent Patients</h3>
+          {/* STATS */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="card">
+              <p>Total</p>
+              <h2>{filteredPatients.length}</h2>
+            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-muted-foreground">
-                  <tr>
-                    <th className="p-3 text-left">Patient</th>
-                    <th className="p-3">Result</th>
-                    <th className="p-3">Confidence</th>
-                    <th className="p-3">Date</th>
+            <div className="card">
+              <p>CKD</p>
+              <h2 className="text-red-400">{stats.ckd}</h2>
+            </div>
+
+            <div className="card">
+              <p>Non-CKD</p>
+              <h2 className="text-green-400">{stats.non_ckd}</h2>
+            </div>
+          </div>
+
+          {/* CHART */}
+          <div className="card">
+            <h3 className="mb-3">Distribution</h3>
+
+            <PieChart width={300} height={300}>
+              <Pie
+                data={[
+                  { name: "CKD", value: stats.ckd },
+                  { name: "Non-CKD", value: stats.non_ckd },
+                ]}
+                dataKey="value"
+              >
+                <Cell fill={COLORS[0]} />
+                <Cell fill={COLORS[1]} />
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </div>
+
+          {/* TABLE */}
+          <div className="card">
+            <h3 className="mb-3">Patients</h3>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-muted-foreground">
+                  <th>Name</th>
+                  <th>Prediction</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredPatients.map((p: any, i) => (
+                  <tr key={i} className="border-b border-border hover:bg-muted/30">
+                    <td>{p.patient_name}</td>
+                    <td>{p.prediction}</td>
+                    <td>{p.confidence}%</td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {patients.slice(-10).reverse().map((p, i) => (
-                    <tr key={i} className="border-t">
-                      <td className="p-3">{p.patient_name}</td>
-                      <td className="p-3">
-                        {p.prediction?.toLowerCase() === "ckd" ? (
-                          <span className="text-red-500">CKD</span>
-                        ) : (
-                          <span className="text-green-500">Normal</span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {p.confidence.toFixed(2)}%
-                      </td>
-                      <td className="p-3">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
+                ))}
+              </tbody>
+            </table>
           </div>
 
         </div>
       </div>
-
-      <Footer />
     </div>
   );
-};
-
-export default Dashboard;
+}
